@@ -48,6 +48,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -130,7 +131,8 @@ private fun isDefaultDialer(ctx: Context): Boolean =
 @Composable
 fun AppRoot(vm: DialerViewModel) {
     val ctx = LocalContext.current
-    var screen by rememberSaveable { mutableStateOf("main") }
+    var screen by remember { mutableStateOf("main") }
+    var pinMode by remember { mutableStateOf<String?>(null) }
     var granted by remember { mutableStateOf(hasCorePerms(ctx)) }
     var isDefault by remember { mutableStateOf(isDefaultDialer(ctx)) }
 
@@ -151,7 +153,7 @@ fun AppRoot(vm: DialerViewModel) {
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).systemBarsPadding()) {
         if (screen == "codes") {
             BackHandler { screen = "main" }
-            CodesScreen(vm) { screen = "main" }
+            CodesScreen(vm, onBack = { screen = "main" }, onChangePin = { pinMode = "change" })
         } else {
             MainScreen(
                 vm = vm,
@@ -162,10 +164,17 @@ fun AppRoot(vm: DialerViewModel) {
                     val rm = ctx.getSystemService(RoleManager::class.java)
                     roleLauncher.launch(rm.createRequestRoleIntent(RoleManager.ROLE_DIALER))
                 },
-                onOpenCodes = { screen = "codes" }
+                onOpenCodes = { pinMode = if (PinStore.hasPin(ctx)) "verify" else "create" }
             )
         }
         vm.revealed?.let { RevealDialog(it) { vm.revealed = null } }
+        pinMode?.let { mode ->
+            PinDialog(
+                mode = mode,
+                onDismiss = { pinMode = null },
+                onSuccess = { pinMode = null; screen = "codes" }
+            )
+        }
     }
 }
 
@@ -217,6 +226,7 @@ fun MainScreen(
                         unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 )
+                IconButton(onClick = onOpenCodes) { Icon(Icons.Default.Settings, "Configuración") }
                 Box {
                     IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, "Más opciones") }
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
