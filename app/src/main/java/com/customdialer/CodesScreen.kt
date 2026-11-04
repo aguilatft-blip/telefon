@@ -46,7 +46,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
 @Composable
-fun CodesScreen(vm: DialerViewModel, onBack: () -> Unit) {
+fun CodesScreen(vm: DialerViewModel, onBack: () -> Unit, onChangePin: () -> Unit) {
     val codes by vm.codes.collectAsState()
     var code by remember { mutableStateOf("") }
     var uri by remember { mutableStateOf<Uri?>(null) }
@@ -63,6 +63,7 @@ fun CodesScreen(vm: DialerViewModel, onBack: () -> Unit) {
             "Códigos secretos", fontSize = 28.sp, fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
         )
+        TextButton(onClick = onChangePin, Modifier.padding(start = 12.dp)) { Text("Cambiar clave") }
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(
                 value = code,
