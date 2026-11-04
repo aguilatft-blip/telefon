@@ -48,6 +48,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.isSystemInDarkTheme
 import android.graphics.BitmapFactory
+import android.media.AudioManager
+import android.media.ToneGenerator
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.runtime.remember
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -145,6 +151,22 @@ fun ContactRow(
     }
 }
 
+private fun toneFor(k: String): Int = when (k) {
+    "0" -> ToneGenerator.TONE_DTMF_0
+    "1" -> ToneGenerator.TONE_DTMF_1
+    "2" -> ToneGenerator.TONE_DTMF_2
+    "3" -> ToneGenerator.TONE_DTMF_3
+    "4" -> ToneGenerator.TONE_DTMF_4
+    "5" -> ToneGenerator.TONE_DTMF_5
+    "6" -> ToneGenerator.TONE_DTMF_6
+    "7" -> ToneGenerator.TONE_DTMF_7
+    "8" -> ToneGenerator.TONE_DTMF_8
+    "9" -> ToneGenerator.TONE_DTMF_9
+    "*" -> ToneGenerator.TONE_DTMF_S
+    "#" -> ToneGenerator.TONE_DTMF_P
+    else -> -1
+}
+
 private val letters = mapOf(
     "2" to "ABC", "3" to "DEF", "4" to "GHI", "5" to "JKL",
     "6" to "MNO", "7" to "PQRS", "8" to "TUV", "9" to "WXYZ", "0" to "+"
@@ -163,6 +185,11 @@ fun Keypad(
 ) {
     val surf = MaterialTheme.colorScheme.surfaceVariant
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    val tone = remember {
+        try { ToneGenerator(AudioManager.STREAM_DTMF, 100) } catch (e: Exception) { null }
+    }
+    DisposableEffect(Unit) { onDispose { tone?.release() } }
+    val haptic = LocalHapticFeedback.current
     Column(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
             .systemBarsPadding().padding(bottom = 16.dp),
@@ -187,7 +214,12 @@ fun Keypad(
                     Box(
                         Modifier.size(76.dp).clip(CircleShape).background(surf)
                             .combinedClickable(
-                                onClick = { onKey(k) },
+                                onClick = {
+                                    val t = toneFor(k)
+                                    if (t >= 0) tone?.startTone(t, 150)
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    onKey(k)
+                                },
                                 onLongClick = if (k == "0") ({ onKey("+") }) else null
                             ),
                         contentAlignment = Alignment.Center
