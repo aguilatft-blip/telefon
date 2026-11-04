@@ -4,6 +4,9 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -119,17 +122,28 @@ fun CodesScreen(vm: DialerViewModel, onBack: () -> Unit, onChangePin: () -> Unit
 @Composable
 fun RevealDialog(code: SecretCode, onClose: () -> Unit) {
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Column(
+        Box(
             Modifier.fillMaxSize().background(Color.Black).systemBarsPadding(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            contentAlignment = Alignment.BottomCenter
         ) {
-            FileImage(
-                code.imagePath,
-                Modifier.fillMaxWidth().weight(1f).padding(20.dp),
-                ContentScale.Fit
-            )
-            Text(code.code, color = Color(0xFFAAB3BD), fontSize = 16.sp, modifier = Modifier.padding(8.dp))
-            Button(onClick = onClose, Modifier.padding(bottom = 24.dp)) { Text("Cerrar") }
+            Column(
+                Modifier.fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 16.dp)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(Color(0xFF252528)),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    Modifier.weight(1f, fill = false)
+                        .padding(start = 16.dp, end = 16.dp, top = 20.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    FileImage(code.imagePath, Modifier.fillMaxWidth(), ContentScale.FillWidth)
+                }
+                TextButton(onClick = onClose, Modifier.padding(vertical = 8.dp)) {
+                    Text("Aceptar", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Medium)
+                }
+            }
         }
     }
 }
